@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conversao-temperatura # esse é o nome do deployment, que será também o prefixo do nome do pod e o nome do replicaset, por onde o k8s vai controlar as versões. Se alterar e aplicar, vai criar um novo deployment no ambiente, não atualizar o existente
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: conversao-temperatura # por qual tag dentro do yaml vai procurar para criar essas 5 réplicas
+  template:
+    metadata:
+      labels:
+        app: conversao-temperatura #define a tag app com esse valor 
+    spec:
+      containers:
+      - name: conversao #esse vai ser o nome do container dentro do pod
+        image: rrochati/conversao-temperatura:v3
+        ports:
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: conversao-temperatura-svc
+spec:
+  selector:
+    app: conversao-temperatura
+  type: NodePort
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+    nodePort: 30000
