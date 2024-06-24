@@ -1,36 +1,90 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: meudeployment
+  name: postgresql
 spec:
-  replicas: 10
   selector:
     matchLabels:
-      app: web
+      app: postgresql
   template:
     metadata:
       labels:
-        app: web
+        app: postgresql
     spec:
       containers:
-      - name: web
-        image: kubedevio/web-color:blue
-        ports: 
-        - name: http
-          containerPort: 80
-          protocol: TCP
+      - name: postgresql
+        image: postgres:15.0
+        ports:
+          - containerPort: 5432
+        envFrom:
+        - secretRef:
+            name: db-secret
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: webcolor
+  name: postgresql
 spec:
   selector:
-    app: web
+    app: postgresql
   ports:
-  - port: 80 #porta exposta no service
-    targetPort: 80 #porta para qual a chamada será direcionada
-    name: http
-    protocol: TCP
+  - port: 5432
+    targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubenews
+spec:
+  selector:
+    matchLabels:
+      app: kubenews
+  template:
+    metadata:
+      labels:
+        app: kubenews
+    spec:
+      containers:
+      - name: kubenews
+        image: rrochati/kube-news:v2
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_PASSWORD #nome da variável no código da app
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: POSTGRES_PASSWORD #nome da variável no secret
+
+        - name: DB_USERNAME #nome da variável no código da app
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: POSTGRES_USER #nome da variável no secret
+
+        - name: DB_DATABASE #nome da variável no código da app
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: POSTGRES_DB #nome da variável no secret
+
+        - name: DB_HOST #nome da variável no código da app
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: POSTGRES_HOST #nome da variável no secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubenews
+spec:
+  selector:
+    app: kubenews
+  ports:
+  - port: 80
+    targetPort: 8080
     nodePort: 30000
-  type: NodePort # é o tipo default, se não especificar
+  type: NodePort
+
+
