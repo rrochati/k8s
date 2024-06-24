@@ -30,7 +30,7 @@ spec:
   type: NodePort
   ports:
   - name: http
-    port: 80
-    targetPort: 8080
+    port: 80 #porta exposta no service
+    targetPort: 8080 #porta para qual a chamada será direcionada dentro do pod, no container
     protocol: TCP
-    nodePort: 30000
+    nodePort: 30000 #porta do pod para comunicação externa
